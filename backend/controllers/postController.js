@@ -39,5 +39,41 @@ const getFeed = async (req, res) => {
     res.status(500).json({ error: 'Server error, please try again' });
   }
 };
+const likePost = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { postId } = req.params;
 
-module.exports = { createPost, getFeed };
+    await pool.query(
+      'INSERT INTO likes (post_id, user_id) VALUES ($1, $2)',
+      [postId, userId]
+    );
+
+    res.status(201).json({ message: 'Post liked' });
+  } catch (error) {
+    if (error.code === '23505') {
+      return res.status(409).json({ error: 'You already liked this post' });
+    }
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+
+const unlikePost = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { postId } = req.params;
+
+    await pool.query(
+      'DELETE FROM likes WHERE post_id = $1 AND user_id = $2',
+      [postId, userId]
+    );
+
+    res.status(200).json({ message: 'Post unliked' });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+
+module.exports = { createPost, getFeed, likePost, unlikePost };
