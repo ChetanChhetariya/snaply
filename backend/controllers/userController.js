@@ -32,7 +32,6 @@ const signup = async (req, res) => {
   }
 };
 
-// NEW FUNCTION
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -41,7 +40,6 @@ const login = async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Step 1: Find the user by email
     const result = await pool.query(
       'SELECT * FROM users WHERE email = $1',
       [email]
@@ -53,21 +51,18 @@ const login = async (req, res) => {
 
     const user = result.rows[0];
 
-    // Step 2: Compare entered password with stored hash
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Step 3: Create a JWT token
     const token = jwt.sign(
       { userId: user.id, username: user.username },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    // Step 4: Send back the token and basic user info
     res.status(200).json({
       message: 'Login successful',
       token,
@@ -84,4 +79,4 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { signup, login }; // updated to export both
+module.exports = { signup, login };

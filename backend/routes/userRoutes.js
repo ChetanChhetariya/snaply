@@ -3,7 +3,7 @@ const router = express.Router();
 const { signup, login } = require('../controllers/userController');
 const authMiddleware = require('../middleware/authmiddleware');
 
-// POST /api/users/signup
+
 router.post('/signup', signup);
 router.post('/login', login);
 router.get('/profile', authMiddleware, (req, res) => {
