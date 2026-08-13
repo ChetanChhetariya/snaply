@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login, followUser, unfollowUser } = require('../controllers/userController');
+const { signup, login, followUser, unfollowUser, getUserProfile } = require('../controllers/userController');
 const authMiddleware = require('../middleware/authmiddleware');
 
 
@@ -12,5 +12,6 @@ router.delete('/:userId/follow', authMiddleware, unfollowUser);
 router.get('/profile', authMiddleware, (req, res) => {
   res.json({ message: 'You are authenticated!', user: req.user });
 });
+router.get('/:userId/profile', authMiddleware, getUserProfile);
 
 module.exports = router;

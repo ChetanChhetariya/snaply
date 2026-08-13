@@ -25,5 +25,32 @@ const deleteFollow = async (followerId, followingId) => {
     [followerId, followingId]
   );
 };
+const getUserProfile = async (userId) => {
+  const userResult = await pool.query(
+    'SELECT id, username, email, created_at FROM users WHERE id = $1',
+    [userId]
+  );
 
-module.exports = { insertUser, findUserByEmail, insertFollow, deleteFollow };
+  if (userResult.rows.length === 0) {
+    return null;
+  }
+
+  const postsResult = await pool.query(
+    'SELECT id, image_url, caption, created_at FROM posts WHERE user_id = $1 ORDER BY created_at DESC',
+    [userId]
+  );
+
+  return {
+    user: userResult.rows[0],
+    posts: postsResult.rows,
+  };
+};
+
+const isFollowing = async (followerId, followingId) => {
+  const result = await pool.query(
+    'SELECT 1 FROM follows WHERE follower_id = $1 AND following_id = $2',
+    [followerId, followingId]
+  );
+  return result.rows.length > 0;
+};
+module.exports = { insertUser, findUserByEmail, insertFollow, deleteFollow, getUserProfile, isFollowing };

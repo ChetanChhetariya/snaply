@@ -71,4 +71,19 @@ const unfollowUser = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, followUser, unfollowUser };
+const getUserProfile = async (req, res) => {
+  try {
+    const profile = await userService.getUserProfile(req.params.userId, req.user.userId);
+
+    if (!profile) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.status(200).json(profile);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+
+module.exports = { signup, login, followUser, unfollowUser, getUserProfile };

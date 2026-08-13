@@ -43,4 +43,17 @@ const unfollowUser = async (followerId, followingId) => {
   return await userModel.deleteFollow(followerId, followingId);
 };
 
-module.exports = { signup, login, followUser, unfollowUser };
+const getUserProfile = async (userId, currentUserId) => {
+  const profile = await userModel.getUserProfile(userId);
+  if (!profile) return null;
+
+  const followers = await userModel.isFollowing(currentUserId, userId);
+
+  return {
+    ...profile,
+    is_own_profile: Number(userId) === Number(currentUserId),
+    followed_by_me: followers,
+  };
+};
+
+module.exports = { signup, login, followUser, unfollowUser, getUserProfile };
