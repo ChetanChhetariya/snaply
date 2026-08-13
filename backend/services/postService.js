@@ -4,8 +4,8 @@ const createPost = async (userId, imageUrl, caption) => {
   return await postModel.insertPost(userId, imageUrl, caption);
 };
 
-const getFeed = async () => {
-  return await postModel.getAllPosts();
+const getFeed = async (currentUserId) => {
+  return await postModel.getAllPosts(currentUserId);
 };
 
 const likePost = async (postId, userId) => {
@@ -15,5 +15,12 @@ const likePost = async (postId, userId) => {
 const unlikePost = async (postId, userId) => {
   await postModel.deleteLike(postId, userId);
 };
+const addComment = async (postId, userId, text) => {
+  return await postModel.insertComment(postId, userId, text);
+};
 
-module.exports = { createPost, getFeed, likePost, unlikePost };
+const getComments = async (postId) => {
+  return await postModel.getCommentsForPost(postId);
+};
+
+module.exports = { createPost, getFeed, likePost, unlikePost, addComment, getComments };

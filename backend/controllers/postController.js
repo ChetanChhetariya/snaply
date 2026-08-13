@@ -21,7 +21,7 @@ const createPost = async (req, res) => {
 
 const getFeed = async (req, res) => {
   try {
-    const posts = await postService.getFeed();
+    const posts = await postService.getFeed(req.user.userId);
     res.status(200).json({ posts });
   } catch (error) {
     console.error(error.message);
@@ -52,4 +52,28 @@ const unlikePost = async (req, res) => {
   }
 };
 
-module.exports = { createPost, getFeed, likePost, unlikePost };
+const addComment = async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) {
+      return res.status(400).json({ error: 'Comment text is required' });
+    }
+
+    const comment = await postService.addComment(req.params.postId, req.user.userId, text);
+    res.status(201).json({ message: 'Comment added', comment });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+
+const getComments = async (req, res) => {
+  try {
+    const comments = await postService.getComments(req.params.postId);
+    res.status(200).json({ comments });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+module.exports = { createPost, getFeed, likePost, unlikePost, addComment, getComments };
