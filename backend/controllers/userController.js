@@ -39,5 +39,36 @@ const login = async (req, res) => {
     res.status(500).json({ error: 'Server error, please try again' });
   }
 };
+const followUser = async (req, res) => {
+  try {
+    const followerId = req.user.userId;
+    const followingId = req.params.userId;
 
-module.exports = { signup, login };
+    await userService.followUser(followerId, followingId);
+    res.status(201).json({ message: 'User followed' });
+  } catch (error) {
+    if (error.code === 'SELF_FOLLOW') {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error.code === '23505') {
+      return res.status(409).json({ error: 'Already following this user' });
+    }
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+
+const unfollowUser = async (req, res) => {
+  try {
+    const followerId = req.user.userId;
+    const followingId = req.params.userId;
+
+    await userService.unfollowUser(followerId, followingId);
+    res.status(200).json({ message: 'User unfollowed' });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+
+module.exports = { signup, login, followUser, unfollowUser };

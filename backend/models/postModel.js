@@ -15,7 +15,11 @@ const getAllPosts = async (currentUserId) => {
             EXISTS (
               SELECT 1 FROM likes
               WHERE likes.post_id = posts.id AND likes.user_id = $1
-            ) AS liked_by_me
+            ) AS liked_by_me,
+            EXISTS (
+              SELECT 1 FROM follows
+              WHERE follows.follower_id = $1 AND follows.following_id = users.id
+            ) AS followed_by_me
      FROM posts
      JOIN users ON posts.user_id = users.id
      ORDER BY posts.created_at DESC`,
@@ -23,7 +27,6 @@ const getAllPosts = async (currentUserId) => {
   );
   return result.rows;
 };
-
 const insertLike = async (postId, userId) => {
   await pool.query('INSERT INTO likes (post_id, user_id) VALUES ($1, $2)', [postId, userId]);
 };

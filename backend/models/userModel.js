@@ -12,5 +12,18 @@ const findUserByEmail = async (email) => {
   const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
   return result.rows[0];
 };
+const insertFollow = async (followerId, followingId) => {
+  await pool.query(
+    'INSERT INTO follows (follower_id, following_id) VALUES ($1, $2)',
+    [followerId, followingId]
+  );
+};
 
-module.exports = { insertUser, findUserByEmail };
+const deleteFollow = async (followerId, followingId) => {
+  await pool.query(
+    'DELETE FROM follows WHERE follower_id = $1 AND following_id = $2',
+    [followerId, followingId]
+  );
+};
+
+module.exports = { insertUser, findUserByEmail, insertFollow, deleteFollow };

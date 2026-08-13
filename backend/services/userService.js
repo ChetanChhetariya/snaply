@@ -30,5 +30,17 @@ const login = async (email, password) => {
     user: { id: user.id, username: user.username, email: user.email },
   };
 };
+const followUser = async (followerId, followingId) => {
+  if (Number(followerId) === Number(followingId)) {
+    const error = new Error('You cannot follow yourself');
+    error.code = 'SELF_FOLLOW';
+    throw error;
+  }
+  return await userModel.insertFollow(followerId, followingId);
+};
 
-module.exports = { signup, login };
+const unfollowUser = async (followerId, followingId) => {
+  return await userModel.deleteFollow(followerId, followingId);
+};
+
+module.exports = { signup, login, followUser, unfollowUser };
