@@ -39,6 +39,7 @@ const login = async (req, res) => {
     res.status(500).json({ error: 'Server error, please try again' });
   }
 };
+
 const followUser = async (req, res) => {
   try {
     const followerId = req.user.userId;
@@ -86,4 +87,10 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, followUser, unfollowUser, getUserProfile };
+module.exports = {
+  signup,
+  login,
+  followUser,
+  unfollowUser,
+  getUserProfile,
+};

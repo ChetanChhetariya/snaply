@@ -1,4 +1,7 @@
 const postService = require('../services/postService');
+const pool = require('../config/db');
+const fs = require('fs');
+const path = require('path');
 
 const createPost = async (req, res) => {
   try {
@@ -76,4 +79,33 @@ const getComments = async (req, res) => {
     res.status(500).json({ error: 'Server error, please try again' });
   }
 };
-module.exports = { createPost, getFeed, likePost, unlikePost, addComment, getComments };
+const deletePost = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { postId } = req.params;
+
+    const post = await pool.query('SELECT * FROM posts WHERE id = $1', [postId]);
+
+    if (post.rows.length === 0) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    if (post.rows[0].user_id !== userId) {
+      return res.status(403).json({ error: 'You can only delete your own post' });
+    }
+
+    await pool.query('DELETE FROM likes WHERE post_id = $1', [postId]);
+    await pool.query('DELETE FROM posts WHERE id = $1', [postId]);
+
+    const imagePath = path.join(__dirname, '..', post.rows[0].image_url);
+    fs.unlink(imagePath, (err) => {
+      if (err) console.error('Failed to delete image file:', err.message);
+    });
+
+    res.status(200).json({ message: 'Post deleted successfully' });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+module.exports = { createPost, getFeed, likePost, unlikePost, addComment, getComments, deletePost };

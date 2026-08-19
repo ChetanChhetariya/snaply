@@ -8,7 +8,7 @@ const insertPost = async (userId, imageUrl, caption) => {
   return result.rows[0];
 };
 
-const getAllPosts = async (currentUserId) => {
+ const getAllPosts = async (currentUserId) => {
   const result = await pool.query(
     `SELECT posts.id, posts.image_url, posts.caption, posts.created_at,
             users.id AS user_id, users.username,
