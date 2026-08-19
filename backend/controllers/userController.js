@@ -1,6 +1,4 @@
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const pool = require('../config/db');
+const userService = require('../services/userService');
 
 const signup = async (req, res) => {
   try {
@@ -10,19 +8,8 @@ const signup = async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    const saltRounds = 10;
-    const password_hash = await bcrypt.hash(password, saltRounds);
-
-    const newUser = await pool.query(
-      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at',
-      [username, email, password_hash]
-    );
-
-    res.status(201).json({
-      message: 'User created successfully',
-      user: newUser.rows[0],
-    });
-
+    const user = await userService.signup(username, email, password);
+    res.status(201).json({ message: 'User created successfully', user });
   } catch (error) {
     console.error(error.message);
     if (error.code === '23505') {
@@ -40,43 +27,70 @@ const login = async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email]
-    );
+    const result = await userService.login(email, password);
 
-    if (result.rows.length === 0) {
+    if (!result) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    const user = result.rows[0];
-
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    const token = jwt.sign(
-      { userId: user.id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.status(200).json({
-      message: 'Login successful',
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-      },
-    });
-
+    res.status(200).json({ message: 'Login successful', ...result });
   } catch (error) {
     console.error(error.message);
     res.status(500).json({ error: 'Server error, please try again' });
   }
 };
 
-module.exports = { signup, login };
+const followUser = async (req, res) => {
+  try {
+    const followerId = req.user.userId;
+    const followingId = req.params.userId;
+
+    await userService.followUser(followerId, followingId);
+    res.status(201).json({ message: 'User followed' });
+  } catch (error) {
+    if (error.code === 'SELF_FOLLOW') {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error.code === '23505') {
+      return res.status(409).json({ error: 'Already following this user' });
+    }
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+
+const unfollowUser = async (req, res) => {
+  try {
+    const followerId = req.user.userId;
+    const followingId = req.params.userId;
+
+    await userService.unfollowUser(followerId, followingId);
+    res.status(200).json({ message: 'User unfollowed' });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+
+const getUserProfile = async (req, res) => {
+  try {
+    const profile = await userService.getUserProfile(req.params.userId, req.user.userId);
+
+    if (!profile) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.status(200).json(profile);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+
+module.exports = {
+  signup,
+  login,
+  followUser,
+  unfollowUser,
+  getUserProfile,
+};

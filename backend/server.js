@@ -5,7 +5,7 @@ const pool = require('./config/db');
 const path = require('path');
 const userRoutes = require('./routes/userRoutes');
 const postRoutes = require('./routes/postRoutes');
-
+const storyRoutes = require('./routes/storyRoutes');
 
 const app = express();
 
@@ -14,6 +14,7 @@ app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/stories', storyRoutes);
 
 app.get('/', (req, res) => {
   res.send('Snaply backend is running!');
