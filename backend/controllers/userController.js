@@ -45,14 +45,18 @@ const followUser = async (req, res) => {
     const followerId = req.user.userId;
     const followingId = req.params.userId;
 
-    await userService.followUser(followerId, followingId);
-    res.status(201).json({ message: 'User followed' });
+    const result = await userService.followUser(followerId, followingId);
+
+    if (result.status === 'pending') {
+      return res.status(201).json({ message: 'Follow request sent', status: 'pending' });
+    }
+    res.status(201).json({ message: 'User followed', status: 'accepted' });
   } catch (error) {
     if (error.code === 'SELF_FOLLOW') {
       return res.status(400).json({ error: error.message });
     }
     if (error.code === '23505') {
-      return res.status(409).json({ error: 'Already following this user' });
+      return res.status(409).json({ error: 'Already following or requested' });
     }
     console.error(error.message);
     res.status(500).json({ error: 'Server error, please try again' });
@@ -87,10 +91,55 @@ const getUserProfile = async (req, res) => {
   }
 };
 
+const togglePrivacy = async (req, res) => {
+  try {
+    const { is_private } = req.body;
+    await userService.setPrivacy(req.user.userId, is_private);
+    res.status(200).json({ message: 'Privacy setting updated', is_private });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+
+const getPendingRequests = async (req, res) => {
+  try {
+    const requests = await userService.getPendingRequests(req.user.userId);
+    res.status(200).json({ requests });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+
+const acceptFollowRequest = async (req, res) => {
+  try {
+    await userService.acceptFollowRequest(req.user.userId, req.params.followerId);
+    res.status(200).json({ message: 'Follow request accepted' });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+
+const rejectFollowRequest = async (req, res) => {
+  try {
+    await userService.rejectFollowRequest(req.user.userId, req.params.followerId);
+    res.status(200).json({ message: 'Follow request rejected' });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: 'Server error, please try again' });
+  }
+};
+
 module.exports = {
   signup,
   login,
   followUser,
   unfollowUser,
   getUserProfile,
+  togglePrivacy,
+  getPendingRequests,
+  acceptFollowRequest,
+  rejectFollowRequest,
 };

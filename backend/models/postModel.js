@@ -18,10 +18,16 @@ const insertPost = async (userId, imageUrl, caption) => {
             ) AS liked_by_me,
             EXISTS (
               SELECT 1 FROM follows
-              WHERE follows.follower_id = $1 AND follows.following_id = users.id
+              WHERE follows.follower_id = $1 AND follows.following_id = users.id AND follows.status = 'accepted'
             ) AS followed_by_me
      FROM posts
      JOIN users ON posts.user_id = users.id
+     WHERE users.id = $1
+        OR users.is_private = false
+        OR EXISTS (
+             SELECT 1 FROM follows
+             WHERE follows.follower_id = $1 AND follows.following_id = users.id AND follows.status = 'accepted'
+           )
      ORDER BY posts.created_at DESC`,
     [currentUserId]
   );

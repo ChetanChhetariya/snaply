@@ -37,7 +37,12 @@ const followUser = async (followerId, followingId) => {
     error.code = 'SELF_FOLLOW';
     throw error;
   }
-  return await userModel.insertFollow(followerId, followingId);
+
+  const isPrivate = await userModel.getPrivacyStatus(followingId);
+  const status = isPrivate ? 'pending' : 'accepted';
+
+  await userModel.insertFollow(followerId, followingId, status);
+  return { status };
 };
 
 const unfollowUser = async (followerId, followingId) => {
@@ -49,13 +54,37 @@ const getUserProfile = async (userId, currentUserId) => {
   if (!profile) return null;
 
   const isOwnProfile = Number(userId) === Number(currentUserId);
-  const followedByMe = await userModel.isFollowing(currentUserId, userId);
+  const followStatus = await userModel.getFollowStatus(currentUserId, userId);
+  const isPrivate = await userModel.getPrivacyStatus(userId);
+  const followedByMe = followStatus === 'accepted';
+
+  const canViewPosts = isOwnProfile || !isPrivate || followedByMe;
 
   return {
     ...profile,
+    posts: canViewPosts ? profile.posts : [],
     is_own_profile: isOwnProfile,
     followed_by_me: followedByMe,
+    follow_status: followStatus,
+    is_private: isPrivate,
+    can_view_posts: canViewPosts,
   };
+};
+
+const setPrivacy = async (userId, isPrivate) => {
+  return await userModel.setPrivacy(userId, isPrivate);
+};
+
+const getPendingRequests = async (userId) => {
+  return await userModel.getPendingRequests(userId);
+};
+
+const acceptFollowRequest = async (userId, requesterId) => {
+  return await userModel.acceptFollowRequest(requesterId, userId);
+};
+
+const rejectFollowRequest = async (userId, requesterId) => {
+  return await userModel.rejectFollowRequest(requesterId, userId);
 };
 
 module.exports = {
@@ -64,4 +93,8 @@ module.exports = {
   followUser,
   unfollowUser,
   getUserProfile,
+  setPrivacy,
+  getPendingRequests,
+  acceptFollowRequest,
+  rejectFollowRequest,
 };
